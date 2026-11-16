@@ -1,43 +1,26 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <netinet/in.h>
 #include <string.h>
+#include "server.h"
+#include "http.h"
 
 
 
 int main() {
-    int servidor;
-    struct sockaddr_in direccion = {0};
+
     char buffer[1024];
 
-    servidor = socket(AF_INET, SOCK_STREAM, 0);
+    SolicitudHTTP solicitud;
+
+    int servidor = iniciar_servidor(8080);
 
     if (servidor == -1) {
-        perror("Error al crear socket");
         return 1;
     }
 
-    direccion.sin_family = AF_INET;
-    direccion.sin_addr.s_addr = htonl(INADDR_ANY);
-    direccion.sin_port = htons(8080);
-
-    if (bind(servidor, (struct sockaddr*)&direccion, sizeof(direccion)) == -1) {
-        perror("Error al enlazar socket en bind");
-        close(servidor);
-        return 1;
-    }
-
-    printf("Socket asociado a la dirección y puerto\n");
-
-    if (listen(servidor, 5) == -1) {
-        perror("Error al escuchar en el socket");
-        close(servidor);
-        return 1;
-    }
-
-    printf("Servidor escuchando en el puerto 8080\n");
-
+    printf("Servidor iniciado. Esperando conexiones...\n");
+    
     int cliente = accept(servidor, NULL, NULL);
     
     if (cliente == -1) {
@@ -62,9 +45,21 @@ int main() {
         close(servidor);
         return 0;
     } else {
-        buffer[bytes_recibidos] = '\0'; // Asegurarse de que el buffer esté terminado en nulo
+        buffer[bytes_recibidos] = '\0'; 
         printf("Datos recibidos: %s\n", buffer);
     }
+
+    if (analizar_solicitud(buffer, &solicitud) == -1) {
+        printf("Solicitud HTTP inválida\n");
+        close(cliente);
+        close(servidor);
+        return 1;
+    }
+
+    printf("Método: %s\n", solicitud.method);
+    printf("Ruta: %s\n", solicitud.path);
+    printf("Versión: %s\n", solicitud.version);
+
 
     const char *repuestas = 
         "HTTP/1.1 200 OK\r\n"
@@ -74,6 +69,7 @@ int main() {
         "\r\n"
         "Hola!\n";
 
+        
     ssize_t enviados = send(cliente, repuestas, strlen(repuestas), 0);
     if (enviados == -1) {
         perror("Error al enviar respuesta");
