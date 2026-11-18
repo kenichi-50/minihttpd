@@ -11,7 +11,7 @@ int main() {
 
     char buffer[1024];
 
-    SolicitudHTTP solicitud;
+    SolicitudHTTP solicitud = {0};
 
     int servidor = iniciar_servidor(8080);
 
@@ -49,25 +49,27 @@ int main() {
         printf("Datos recibidos: %s\n", buffer);
     }
 
-    if (analizar_solicitud(buffer, &solicitud) == -1) {
-        printf("Solicitud HTTP inválida\n");
-        close(cliente);
-        close(servidor);
-        return 1;
+    int resultado = analizar_solicitud(buffer, &solicitud);
+
+    if (resultado == 0) {
+        printf("Método: %s\n", solicitud.method);
+        printf("Ruta: %s\n", solicitud.path);
+        printf("Versión: %s\n", solicitud.version);
+    
+        printf("Host: %s\n", solicitud.host);
+        printf("Connection: %s\n", solicitud.connection);
+        printf("User-Agent: %s\n", solicitud.user_agent);
     }
 
-    printf("Método: %s\n", solicitud.method);
-    printf("Ruta: %s\n", solicitud.path);
-    printf("Versión: %s\n", solicitud.version);
+    if (resultado == -1) {
+        printf("Solicitud HTTP inválida\n");
+    }
 
+    if (resultado == -2) {
+        printf("Método HTTP no permitido\n");
+    }
 
-    const char *repuestas = 
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 6\r\n"
-        "Connection: close\r\n"
-        "\r\n"
-        "Hola!\n";
+    const char *repuestas = obtener_respuesta_http(resultado);
 
         
     ssize_t enviados = send(cliente, repuestas, strlen(repuestas), 0);
