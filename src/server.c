@@ -14,7 +14,16 @@ int iniciar_servidor(int puerto) {
         perror("Error al crear socket");
         return -1;
     }
+    
+    int opcion = 1;
 
+    if (setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR,
+                &opcion, sizeof(opcion)) == -1) {
+        perror("Error al configurar socket");
+        close(servidor);
+        return -1;
+    }
+    
     direccion.sin_family = AF_INET;
     direccion.sin_addr.s_addr = htonl(INADDR_ANY);
     direccion.sin_port = htons(puerto);

@@ -1,0 +1,23 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    text-align: center;
+    margin-top: 100px;
+}
+
+h1 {
+    color: #2563eb;
+}
+
+p {
+    color: #333;
+}
+
+.imagen {
+    display: block;
+    max-width: 320px;
+    width: 90%;
+    height: auto;
+    margin: 24px auto;
+    border-radius: 12px;
+}
